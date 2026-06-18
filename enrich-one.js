@@ -2,46 +2,44 @@ import Anthropic from "@anthropic-ai/sdk";
 
 const client = new Anthropic();
 
-// Контактът, с който тестваме
 const contact = { name: "Hristo Borisov", company: "Payhawk" };
 
-// Инструкциите, които превръщат Claude в строг двигател за обогатяване
 const systemPrompt = `You are a contact-enrichment engine for an early-stage VC fund focused on Central and Eastern Europe.
-Given a person's name and company, return what you know about them.
+Given a person's name and company, use web search to find current, accurate information about them.
 
 Return ONLY a single valid JSON object. No markdown, no code fences, no commentary before or after.
 
 The JSON must have exactly these fields:
-- name: the person's name
-- company: the company name
+- name, company: as given
 - title: their role (e.g. "Co-founder & CEO")
-- sector: the company's sector (e.g. "Fintech")
-- stage: funding stage if known (e.g. "Seed", "Series A", "Public") or "unknown"
-- hq_location: city and country of the company HQ
-- linkedin: full LinkedIn URL, or "not found" if you are not certain it is real
+- sector: the company's sector
+- stage: current funding stage if found (e.g. "Seed", "Series A", "Public") or "unknown"
+- hq_location: city and country of HQ
+- linkedin: full LinkedIn URL ONLY if you found a real one in search results, otherwise "not found"
 - summary: one sentence on who this person is
-- suggested_action: a concrete next step for the fund, grounded in the facts above (the fund invests pre-seed onward, so a unicorn founder is a potential LP/angel/dealflow source, not an investment target)
-- confidence: "high", "medium", or "low" — how sure you are about the data above
+- suggested_action: a concrete next step for the fund, grounded in the facts (fund invests pre-seed onward; a unicorn founder is a potential LP/angel/dealflow source, not a target)
+- confidence: "high", "medium", or "low" — based on how much you could actually verify via search
 
-Never invent a LinkedIn URL. If unsure, write "not found".
-Base suggested_action only on what you actually know. If you are guessing, lower the confidence.`;
+Never invent a LinkedIn URL. Base everything on what search actually returned.`;
 
 const response = await client.messages.create({
-    model: "claude-haiku-4-5",
-    max_tokens: 500,
+    model: "claude-sonnet-4-6",
+    max_tokens: 1024,
     system: systemPrompt,
     messages: [
         { role: "user", content: `Name: ${contact.name}\nCompany: ${contact.company}` }
     ],
+    tools: [
+        { type: "web_search_20250305", name: "web_search", max_uses: 3 }
+    ],
 });
 
-// Отговорът на Claude е текст — очакваме да е JSON
-let raw = response.content[0].text.trim();
-
-// Предпазна мрежа: маха кодовите кавички, ако моделът все пак ги е сложил
+// Когато Claude ползва инструмент, отговорът съдържа НЯКОЛКО блока:
+// стъпките на търсенето + финалния текст. Взимаме само последния текстов блок.
+const textBlocks = response.content.filter(b => b.type === "text").map(b => b.text);
+let raw = textBlocks[textBlocks.length - 1].trim();
 raw = raw.replace(/```json/g, "").replace(/```/g, "").trim();
 
-// Превръщаме текста в истински JavaScript обект
 try {
     const enriched = JSON.parse(raw);
     console.log(JSON.stringify(enriched, null, 2));
