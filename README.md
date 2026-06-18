@@ -88,4 +88,4 @@ Node.js · `@anthropic-ai/sdk` · Claude Sonnet 4.6 with the web search tool
 
 ---
 
-Built by [your-name] as a demo for the AI & Claude Engineer role at Eleven.
+Built by [nyordanov077](https://github.com/nyordanov077) as a demo for the AI & Claude Engineer role at Eleven.
