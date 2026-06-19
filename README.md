@@ -3,6 +3,19 @@
 > An agentic pipeline that turns a raw list of names into structured, VC-ready
 > contact intelligence — powered by Claude with live web search tool use.
 
+## Two implementations
+
+This repo solves the same VC contact-enrichment problem two ways:
+
+- **Code pipeline** (this directory) — a Node.js pipeline that uses Claude with the
+  live web search tool to enrich a CSV of contacts into validated, structured JSON.
+- **No-code automation** ([`make-automation/`](./make-automation)) — a Make.com
+  scenario that enriches new CRM rows in a Google Sheet on the fly, scoring each
+  contact for VC relevance.
+
+Together they show the same problem approached through both hands-on engineering
+and automation-platform tooling.
+
 ## The problem
 
 Early-stage VC funds work with constant streams of people data: founders met at
